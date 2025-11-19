@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Catalog.Core/Catalog.Core.csproj" />
+  <Project Path="Catalog.GraphQLApi/Catalog.GraphQLApi.csproj" />
+  <Project Path="Catalog.GrpcApi/Catalog.GrpcApi.csproj" />
+</Solution>

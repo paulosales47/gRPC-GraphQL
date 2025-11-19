@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package product.v1;
+
+option csharp_namespace = "Catalog.GrpcApi";
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/field_mask.proto";
+
+service ProductService {
+  rpc GetProduct (GetProductRequest) returns (ProductResponse){
+	option (google.api.http) = {
+	  get: "/v1/products/{id}"
+	};
+  }
+
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse){
+	option (google.api.http) = {
+	  get: "/v1/products"
+	};
+  }
+
+  rpc CreateProduct (CreateProductRequest) returns (ProductResponse){
+	option (google.api.http) = {
+	  post: "/v1/products"
+	  body: "*"
+	};
+  }
+
+  rpc UpdateProduct (UpdateProductRequest) returns (ProductResponse){
+	option (google.api.http) = {
+	  put: "/v1/products/{id}"
+	  body: "*"
+	};
+  }
+
+  rpc DeleteProduct (DeleteProductRequest) returns (google.protobuf.Empty){
+	option (google.api.http) = {
+	  delete: "/v1/products/{id}"
+	};
+  }
+
+  rpc PatchProduct (PatchProductRequest) returns (ProductResponse){
+	option (google.api.http) = {
+		patch: "/v1/products/{id}"
+		body: "*"
+	};
+  }
+}
+
+message GetProductRequest {
+  int32 id = 1;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  uint64 price_cents = 2;
+  uint32 stock = 3;
+}
+
+message UpdateProductRequest {
+  int32 id = 1;
+  string name = 2;
+  uint64 price_cents = 3;
+  uint32 stock = 4;
+}
+
+message DeleteProductRequest{
+	int32 id = 1;
+}
+
+message PatchProductRequest {
+  int32 id = 1;
+  string name = 2;
+  uint64 price_cents = 3;
+  uint32 stock = 4;
+  google.protobuf.FieldMask update_mask = 10;
+}
+
+message ProductResponse {
+  int32 id = 1;
+  string name = 2;
+  uint64 price_cents = 3;
+  uint32 stock = 4;
+}
+
+message ListProductsRequest {}
+
+message ListProductsResponse {
+  repeated ProductResponse products = 1;
+}
