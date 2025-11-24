@@ -3,13 +3,13 @@ using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Google.Protobuf.WellKnownTypes;
 
-namespace Catalog.GrpcApi.Services
+namespace Catalog.GrpcApi.Services.Product.v1
 {
-    public class ProductGrcpService : ProductService.ProductServiceBase
+    public class ProductGrcpServiceV1 : ProductService.ProductServiceBase
     {
         private readonly CatalogDbContext _db;
 
-        public ProductGrcpService(CatalogDbContext db) { _db = db; }
+        public ProductGrcpServiceV1(CatalogDbContext db) { _db = db; }
 
         public override async Task<ProductResponse> GetProduct(
             GetProductRequest request,

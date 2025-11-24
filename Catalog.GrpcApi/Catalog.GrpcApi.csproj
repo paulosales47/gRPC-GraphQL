@@ -8,8 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\greet.proto" GrpcServices="Server" />
-	  <Protobuf Include="Protos\product.proto" GrpcServices="Server" /> 
+      <Protobuf Include="Protos\product\v1\product.proto" GrpcServices="Server" />
+	  <Protobuf Include="Protos\greet.proto" GrpcServices="Server" />
+	  <Protobuf Include="Protos\google\api\annotations.proto" />
+	  <Protobuf Include="Protos\google\api\http.proto" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,6 @@
+﻿namespace Catalog.GrpcApi.Protos.product.v2
+{
+    public class product
+    {
+    }
+}

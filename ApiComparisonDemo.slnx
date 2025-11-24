@@ -2,4 +2,5 @@
   <Project Path="Catalog.Core/Catalog.Core.csproj" />
   <Project Path="Catalog.GraphQLApi/Catalog.GraphQLApi.csproj" />
   <Project Path="Catalog.GrpcApi/Catalog.GrpcApi.csproj" />
+  <Project Path="Catalog.GrpcClient/Catalog.GrpcClient.csproj" Id="28158b43-b03f-4a05-a712-741e4bdcb85b" />
 </Solution>

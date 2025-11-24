@@ -1,14 +1,37 @@
-using Catalog.GrpcClient.Services;
+﻿using Catalog.GrpcApi;
+using Catalog.GrpcClient;
+using Grpc.Net.Client;
+using Microsoft.Extensions.Logging;
 
-var builder = WebApplication.CreateBuilder(args);
+var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddSimpleConsole(o =>
+    {
+        o.SingleLine = true;
+        o.TimestampFormat = "HH:mm:ss ";
+    });
+    builder.SetMinimumLevel(LogLevel.Information);
+});
 
-// Add services to the container.
-builder.Services.AddGrpc();
+var logger = loggerFactory.CreateLogger("Main");
 
-var app = builder.Build();
+// Handler para aceitar certificado dev em https://localhost
+var handler = new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback =
+        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+};
 
-// Configure the HTTP request pipeline.
-app.MapGrpcService<GreeterService>();
-app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+using var channel = GrpcChannel.ForAddress("https://localhost:7073", new GrpcChannelOptions
+{
+    HttpHandler = handler,
+    LoggerFactory = loggerFactory
+});
 
-app.Run();
+var grpcClient = new ProductService.ProductServiceClient(channel);
+var catalogClient = new CatalogGrpcClient(grpcClient, loggerFactory.CreateLogger<CatalogGrpcClient>());
+
+await catalogClient.RunDemoAsync();
+
+logger.LogInformation("Pressione ENTER para sair.");
+Console.ReadLine();
