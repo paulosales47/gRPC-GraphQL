@@ -2,7 +2,6 @@
 using Catalog.GrpcClient;
 using Catalog.GrpcClient.Resilience;
 using Catalog.GrpcClient.Services.Product.v1;
-using Google.Api;
 using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +31,6 @@ var host = Host.CreateDefaultBuilder(args)
         // Channel compartilhado
         services.AddSingleton(sp =>
         {
-            // ajuste a URL se for diferente
             return GrpcChannel.ForAddress("https://localhost:7073", new GrpcChannelOptions
             {
                 HttpHandler = handler,
@@ -56,7 +54,6 @@ var host = Host.CreateDefaultBuilder(args)
         // Resiliência compartilhada
         services.AddSingleton<IGrpcResiliencePolicy, GrpcResiliencePolicy>();
 
-        // Seus clients de alto nível
         services.AddSingleton<CatalogGrpcClient>();
         services.AddSingleton<CatalogGrpcClientV2>();
     })
