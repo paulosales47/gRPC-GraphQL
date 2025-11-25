@@ -1,11 +1,14 @@
 ﻿using Catalog.Core;
+using Catalog.Core.Entities.Product;
+using Catalog.Core.Entities.Product.Validations;
+using Catalog.Core.Exceptions;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
-using Google.Protobuf.WellKnownTypes;
 
 namespace Catalog.GrpcApi.Services.Product.v1
 {
-    public class ProductGrcpServiceV1 : ProductService.ProductServiceBase
+    public class ProductGrcpServiceV1 : ProductServiceV1.ProductServiceV1Base
     {
         private readonly CatalogDbContext _db;
 
@@ -22,13 +25,7 @@ namespace Catalog.GrpcApi.Services.Product.v1
                 throw new RpcException(new Status(StatusCode.NotFound, "Product not found"));
             }
 
-            return new ProductResponse
-            {
-                Id = product.Id,
-                Name = product.Name,
-                PriceCents = product.PriceCents,
-                Stock = product.Stock
-            };
+            return Map(product);
         }
 
         public override async Task<ListProductsResponse> ListProducts(
@@ -60,23 +57,26 @@ namespace Catalog.GrpcApi.Services.Product.v1
             if (request.Stock <= 0)
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Stock is required to be greater than 0"));
 
-            var product = new Product
+            var product = new ProductIntegration
             {
                 Name = request.Name,
                 PriceCents = request.PriceCents,
                 Stock = request.Stock
             };
 
+            try
+            {
+                ProductValidation.Validate(product.PriceCents, product.Stock);
+            }
+            catch (DomainException ex)
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message));
+            }
+
             _db.Products.Add(product);
             await _db.SaveChangesAsync();
 
-            return new ProductResponse
-            {
-                Id = product.Id,
-                Name = product.Name,
-                PriceCents = product.PriceCents,
-                Stock = product.Stock
-            };
+            return Map(product);
         }
 
         public override async Task<ProductResponse> UpdateProduct(
@@ -92,27 +92,28 @@ namespace Catalog.GrpcApi.Services.Product.v1
             if (request.PriceCents == 0)
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "PriceCents must be greater than 0."));
 
-            
+
             var product = await _db.Products.FindAsync(request.Id);
 
             if (product is null)
                 throw new RpcException(new Status(StatusCode.NotFound, $"Product with Id {request.Id} not found."));
 
-            
             product.Name = request.Name;
             product.PriceCents = request.PriceCents;
             product.Stock = request.Stock;
 
-            
+            try
+            {
+                ProductValidation.Validate(product.PriceCents, product.Stock);
+            }
+            catch (DomainException ex)
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message));
+            }
+
             await _db.SaveChangesAsync();
 
-            return new ProductResponse
-            {
-                Id = product.Id,
-                Name = product.Name,
-                PriceCents = product.PriceCents,
-                Stock = (uint)product.Stock
-            };
+            return Map(product);
         }
 
         public override async Task<Empty> DeleteProduct(
@@ -134,7 +135,7 @@ namespace Catalog.GrpcApi.Services.Product.v1
         }
 
         public override async Task<ProductResponse> PatchProduct(
-            PatchProductRequest request, 
+            PatchProductRequest request,
             ServerCallContext context)
         {
             if (request.Id <= 0)
@@ -158,8 +159,7 @@ namespace Catalog.GrpcApi.Services.Product.v1
                         break;
 
                     case "price_cents":
-                        if (request.PriceCents >= 0)
-                            product.PriceCents = request.PriceCents;
+                        product.PriceCents = request.PriceCents;
                         break;
 
                     case "stock":
@@ -173,14 +173,28 @@ namespace Catalog.GrpcApi.Services.Product.v1
                 }
             }
 
+            try
+            {
+                ProductValidation.Validate(product.PriceCents, product.Stock);
+            }
+            catch (DomainException ex)
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message));
+            }
+
             await _db.SaveChangesAsync();
 
+            return Map(product);
+        }
+
+        private static ProductResponse Map(ProductIntegration product)
+        {
             return new ProductResponse
             {
                 Id = product.Id,
                 Name = product.Name,
                 PriceCents = product.PriceCents,
-                Stock = (uint)product.Stock
+                Stock = product.Stock
             };
         }
     }

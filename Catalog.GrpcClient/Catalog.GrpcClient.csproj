@@ -9,7 +9,8 @@
   </PropertyGroup>
 
 <ItemGroup>
-	<Protobuf Include="..\Catalog.GrpcApi\Protos\product.proto" GrpcServices="Client" />
+	<Protobuf Include="..\Catalog.GrpcApi\Protos\product\v1\product.proto" GrpcServices="Client" />
+	<Protobuf Include="..\Catalog.GrpcApi\Protos\product\v2\product.v2.proto" GrpcServices="Client" />
 </ItemGroup>
 	
   <ItemGroup>

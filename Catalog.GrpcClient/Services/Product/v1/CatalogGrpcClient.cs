@@ -1,42 +1,22 @@
 ﻿using Catalog.GrpcApi;
+using Catalog.GrpcClient.Resilience;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Polly;
-using Polly.Retry;
 
-namespace Catalog.GrpcClient;
+namespace Catalog.GrpcClient.Services.Product.v1;
 
 public class CatalogGrpcClient
 {
-    private readonly ProductService.ProductServiceClient _client;
+    private readonly ProductServiceV1.ProductServiceV1Client _client;
     private readonly ILogger<CatalogGrpcClient> _logger;
-    private readonly AsyncRetryPolicy _retryPolicy;
+    private readonly IGrpcResiliencePolicy _resiliencePolicy;
 
-    public CatalogGrpcClient(ProductService.ProductServiceClient client, ILogger<CatalogGrpcClient> logger)
+    public CatalogGrpcClient(ProductServiceV1.ProductServiceV1Client client, ILogger<CatalogGrpcClient> logger, IGrpcResiliencePolicy resiliencePolicy)
     {
         _client = client;
         _logger = logger;
-
-        // Política de retry com Polly:
-        // - Só tenta novamente em erros transitórios (Unavailable, DeadlineExceeded)
-        // - 3 tentativas
-        // - Backoff exponencial simples (200ms, 400ms, 800ms)
-        _retryPolicy = Policy
-            .Handle<RpcException>(ex =>
-                ex.StatusCode == StatusCode.Unavailable ||
-                ex.StatusCode == StatusCode.DeadlineExceeded)
-            .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt - 1)),
-                onRetry: (ex, delay, attempt, ctx) =>
-                {
-                    _logger.LogWarning(ex,
-                        "Tentativa {Attempt} falhou com {Status}. Novo retry em {Delay}...",
-                        attempt,
-                        (ex as RpcException)?.StatusCode,
-                        delay);
-                });
+        _resiliencePolicy = resiliencePolicy;
     }
 
     // ==== Helpers comuns =====================================================
@@ -53,7 +33,7 @@ public class CatalogGrpcClient
     private Task<T> ExecuteWithRetry<T>(
         Func<CancellationToken, Task<T>> action,
         CancellationToken cancellationToken = default)
-        => _retryPolicy.ExecuteAsync(ct => action(ct), cancellationToken);
+        => _resiliencePolicy.ExecuteAsync(ct => action(ct), cancellationToken);
 
     // ==== Operações de CRUD expostas como métodos públicos ===================
 

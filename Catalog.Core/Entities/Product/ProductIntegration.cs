@@ -1,6 +1,6 @@
-﻿namespace Catalog.Core;
+﻿namespace Catalog.Core.Entities.Product;
 
-public class Product
+public class ProductIntegration
 {
     public int Id { get; set; }
     public Guid PublicId { get; set; } = Guid.NewGuid();

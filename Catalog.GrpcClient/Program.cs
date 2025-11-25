@@ -1,6 +1,11 @@
 ﻿using Catalog.GrpcApi;
 using Catalog.GrpcClient;
+using Catalog.GrpcClient.Resilience;
+using Catalog.GrpcClient.Services.Product.v1;
+using Google.Api;
 using Grpc.Net.Client;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 var loggerFactory = LoggerFactory.Create(builder =>
@@ -15,23 +20,53 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 var logger = loggerFactory.CreateLogger("Main");
 
-// Handler para aceitar certificado dev em https://localhost
-var handler = new HttpClientHandler
-{
-    ServerCertificateCustomValidationCallback =
-        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-};
+var host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services =>
+    {
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = 
+            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
 
-using var channel = GrpcChannel.ForAddress("https://localhost:7073", new GrpcChannelOptions
-{
-    HttpHandler = handler,
-    LoggerFactory = loggerFactory
-});
+        // Channel compartilhado
+        services.AddSingleton(sp =>
+        {
+            // ajuste a URL se for diferente
+            return GrpcChannel.ForAddress("https://localhost:7073", new GrpcChannelOptions
+            {
+                HttpHandler = handler,
+                LoggerFactory = loggerFactory
+            });
+        });
 
-var grpcClient = new ProductService.ProductServiceClient(channel);
-var catalogClient = new CatalogGrpcClient(grpcClient, loggerFactory.CreateLogger<CatalogGrpcClient>());
+        // Clients gRPC gerados
+        services.AddSingleton(sp =>
+        {
+            var channel = sp.GetRequiredService<GrpcChannel>();
+            return new ProductServiceV1.ProductServiceV1Client(channel);
+        });
 
-await catalogClient.RunDemoAsync();
+        services.AddSingleton(sp =>
+        {
+            var channel = sp.GetRequiredService<GrpcChannel>();
+            return new ProductServiceV2.ProductServiceV2Client(channel);
+        });
 
-logger.LogInformation("Pressione ENTER para sair.");
-Console.ReadLine();
+        // Resiliência compartilhada
+        services.AddSingleton<IGrpcResiliencePolicy, GrpcResiliencePolicy>();
+
+        // Seus clients de alto nível
+        services.AddSingleton<CatalogGrpcClient>();
+        services.AddSingleton<CatalogGrpcClientV2>();
+    })
+    .Build();
+
+var clientV1 = host.Services.GetRequiredService<CatalogGrpcClient>();
+await clientV1.RunDemoAsync();
+
+var clientV2 = host.Services.GetRequiredService<CatalogGrpcClientV2>();
+await clientV2.RunDemoAsync();
+
+logger.LogInformation("Demos concluídas. Pressione qualquer tecla para sair...");
+Console.ReadKey();

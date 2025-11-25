@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Catalog.Core.Entities.Product;
+using Microsoft.EntityFrameworkCore;
 
 namespace Catalog.Core;
 
@@ -9,5 +10,5 @@ public class CatalogDbContext : DbContext
     {
     }
 
-    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductIntegration> Products => Set<ProductIntegration>();
 }

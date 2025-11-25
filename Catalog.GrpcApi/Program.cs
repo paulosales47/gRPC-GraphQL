@@ -1,5 +1,6 @@
 using Catalog.Core;
 using Catalog.GrpcApi.Services.Product.v1;
+using Catalog.GrpcApi.Services.Product.v2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -36,6 +37,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapGrpcService<ProductGrcpServiceV1>();
+app.MapGrpcService<ProductGrcpServiceV2>();
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 app.Run();

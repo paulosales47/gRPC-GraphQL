@@ -8,7 +8,7 @@ import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/field_mask.proto";
 
-service ProductService {
+service ProductServiceV1 {
   rpc GetProduct (GetProductRequest) returns (ProductResponse){
 	option (google.api.http) = {
 	  get: "/v1/products/{id}"
